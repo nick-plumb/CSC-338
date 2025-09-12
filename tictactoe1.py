@@ -143,7 +143,6 @@ class TicTacToeGame:
                     self.gameboard.entries[humanrow][humancol] = 1
                     self.turn = 2
                     validinput = True
-                    break
                 except ValueError:
                     print("Invalid input, please enter two numbers separated by a comma.")
 
