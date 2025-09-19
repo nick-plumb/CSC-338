@@ -1,12 +1,5 @@
-import sys
 import math
 import random
-######################################
-# Todo
-# 1. rewrite the code under the class setting
-# 2. add alpha-beta pruning
-# 3. Monte Carlo Tree Search
-##################################### 
 
 WIN_LINES = [
     [(0,0),(0,1),(0,2)],  # rows
@@ -25,20 +18,13 @@ class GameBoard:
     def __init__(self):
 
         self.entries = [[0, 0, 0], [0, 0, 0], [0, 0 ,0]]
-        self.state = 0
-        # State 0: Game playing
-        # State 1: Player 1 wins
-        # State 2: Player 2 wins
-        # State 3: draw
-
+        
     def print_bd(self):
 
         for i in range(3):
             for j in range(3):
                 print(self.entries[i][j],end='')
             print('')
-
-
 
     def checkwin(self) -> int:
         
@@ -55,59 +41,10 @@ class GameBoard:
         return 3
     
     def check_nextplayer(self, bd = None):
-        #count how many 1 and 2 in bd
         count_1 = sum(cc == 1 for row in bd for cc in row)
         count_2 = sum(cc == 2 for row in bd for cc in row)
-        
-        if count_1 > count_2:
-            return 2
-        else:
-            return 1
+        return 1 if count_1 == count_2 else 2
     
-
-    def minmax(self, bd=None, depth=0):
-        # set default player to 1(X) cause it is the first player
-        # score for x: +, score for o:-
-        # return (move, score)
-        
-        result = self.checkwin()
-        if result == 1: 
-            return None, 10-depth # x win, prefer faster wins 
-        if result == 2: 
-            return None, depth-10 # o win, prefer slower losses 
-        if result == 3: 
-            return None, 0 #draw
-        
-
-
-        moves = [(r,c) for r in range(3) for c in range(3) if bd[r][c]==0] # all possible position where the board is empty
-        player = self.check_nextplayer(bd)
-        
-
-        if player == 1: # x's turn, maximize
-            best = -1e9 # initilize to very small number
-            move = None 
-            for r,c in moves:
-                bd[r][c]=1 # if x plays here
-                _,score=self.minmax(bd,depth+1) # o's turn 
-                bd[r][c]=0 # undo move
-                
-                if score>best: # pick the move with the largest score
-                    best,move=score,(r,c)
-            return move,best
-        
-        else: # o's turn, minimize     
-            best = 1e9 # initilize to very large number
-            move=None
-            for r,c in moves:
-                bd[r][c]=2
-                _,score=self.minmax(bd,depth+1) # x's turn
-                bd[r][c]=0
-                
-                if score<best: # pick the move with the smallest score
-                    best,move=score,(r,c)
-            return move,best
-        
     def getmoves(self):
         return [(r,c) for r in range(3) for c in range(3) if self.entries[r][c]==0] # all possible position where the board is empty
     
@@ -116,80 +53,6 @@ class GameBoard:
         new_board.entries = [row[:] for row in self.entries]
         return new_board
     
-        
-        
-            
-
-class TicTacToeGame:
-
-    def __init__(self, player):
-
-        self.gameboard = GameBoard()
-        self.turn = 1
-        self.turnnumber = 1
-        if player == 1:
-            self.aiturn = 2
-        else:
-            self.aiturn = 1       
-
-
-    def playturn(self, player):
-        print("Turn number: ", self.turnnumber)
-        self.turnnumber += 1
-        
-        self.gameboard.print_bd()
-
-        if self.turn == player:
-            print("Human, please choose a space!")
-            validinput = False
-            
-            while not validinput:
-                user_input = input("Enter two numbers separated by a comma: ")
-                try:
-                    humanrow, humancol = map(int, map(str.strip, user_input.split(',')))
-
-                    if not (0 <= humanrow <= 2 and 0 <= humancol <= 2):
-                        print("Invalid move, try again.")
-                        continue
-                    if self.gameboard.entries[humanrow][humancol] != 0:
-                        print("Invalid move, space is occupied.")
-                        continue
-
-                    self.gameboard.entries[humanrow][humancol] = self.turn
-                    self.turn = self.aiturn
-                    validinput = True
-                except ValueError:
-                    print("Invalid input, please enter two numbers separated by a comma.")
-
-
-            
-        else:
-            print("AI is thinking...")
-            # move, score = self.gameboard.minmax(self.gameboard.entries)
-            best_action, _, next_state = MCTS_move(self.gameboard, iterations=1000)
-
-            print("AI chooses move: ", best_action)
-            self.gameboard = next_state
-            self.turn = player
-
-
-
-
-# game = TicTacToeGame()
-
-# while game.gameboard.state == 0:
-#     game.playturn()
-#     game.gameboard.state = game.gameboard.checkwin()
-#     print(' ')
-
-# game.gameboard.print_bd()
-# if game.gameboard.state == 1:
-#     print("Player 1 wins!")
-# elif game.gameboard.state == 2:
-#     print("Player 2 wins!")
-# else:
-#     print("The game is a draw!")
-
 class MCTSNode:
     def __init__(self, bd: GameBoard, parent: None, action: None):
         self.bd = bd             
@@ -309,7 +172,8 @@ def MCTS_move(root_state: GameBoard, iterations=2000):
     
     return best_action, player, next_state
 
-
+bd = GameBoard()
+ai = MCTS()
 # print('-------- before move ----------')
 # bd.entries = [[1,0,0],[0,2,0],[0,0,0]]
 # bd.print_bd()
@@ -318,38 +182,26 @@ def MCTS_move(root_state: GameBoard, iterations=2000):
 # print("Best action:", best_action, "for player", next_player)
 # next_bd.print_bd()
 # print('----------------------------------')
-
 playing = True
-valid = False
-
-while not valid:
-    player = input("Player 1 or player 2?")
-    try:
-        if int(player) != 1 and int(player) != 2:
-            print("Please enter 1 or 2")
-            continue
-        player = int(player)
-        valid = True
-    except ValueError:
-        print("Please enter 1 or 2")
-        continue
-
-
-game = TicTacToeGame(player)
-
+player = input("Player 1 or player 2?")
 # implement input checking
 while playing:
-    game.playturn(player)
-    game.gameboard.print_bd()
-    result = game.gameboard.checkwin()
+    bd.print_bd()
+    result = bd.checkwin()
     if result == 1:
-        print("Player 1 wins!" if player == 1 else "AI wins!")
+        print("You win!")
         playing = False
     elif result == 2:
-        print("Player 2 wins!" if player == 2 else "AI wins!")
+        print("You lose!")
         playing = False
     elif result == 3:
-        print("It's a draw!")
+        print("Draw")
         playing = False
-    print("")
     
+    if player == bd.check_nextplayer(bd):
+        # player move
+        
+        continue
+    else:
+        # ai move
+        continue
